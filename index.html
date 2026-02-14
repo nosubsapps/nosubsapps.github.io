@@ -20,6 +20,13 @@
     .warn { margin-top:18px; padding:14px; border-radius:16px; border:1px solid var(--line); background:#0f0f11; color:var(--muted); }
     a { color:var(--fg); text-decoration:underline; text-underline-offset:4px; }
     .footer { margin-top:24px; color:var(--muted); font-size:13px; }
+    .toast {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      background: #0f0f11; border: 1px solid var(--line); color: var(--fg);
+      padding: 10px 12px; border-radius: 12px; font-size: 13px;
+      opacity: 0; pointer-events: none; transition: opacity .18s ease;
+    }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 
@@ -32,7 +39,7 @@
     <div class="warn">
       <div class="title">Important</div>
       <div class="meta">
-        Send only on the specified network. Crypto transfers are irreversible. If you are unsure — please make a small test transfer first.
+        Send only on the specified network. Crypto transfers are irreversible.
       </div>
     </div>
 
@@ -42,57 +49,81 @@
           <div class="title">USDT — Tron (TRC20)</div>
           <div class="meta">Stablecoin. Low fees. Recommended.</div>
         </div>
-        <button class="btn" onclick="copyText('usdt')">Copy</button>
+        <button class="btn" aria-label="Copy USDT address" onclick="copyText('usdt')">Copy</button>
       </div>
-      <code id="usdt">YOUR_USDT_TRC20_ADDRESS</code>
-      <div class="meta">Network: TRON / TRC20 only.</div>
+      <code id="usdt">TPFM7xoZXWm6KUNWCVBWE3c7voc6r4x2T8</code>
+      <div class="meta">Network: TRON / TRC20 only. Do not send USDT via ERC20 / BEP20 / Polygon.</div>
     </div>
 
     <div class="card">
       <div class="row">
         <div>
-          <div class="title">BTC — Bitcoin network</div>
-          <div class="meta">Bitcoin mainnet.</div>
+          <div class="title">BTC — Bitcoin</div>
+          <div class="meta">Bitcoin mainnet. SegWit address (bc1q).</div>
         </div>
-        <button class="btn" onclick="copyText('btc')">Copy</button>
+        <button class="btn" aria-label="Copy BTC address" onclick="copyText('btc')">Copy</button>
       </div>
-      <code id="btc">YOUR_BTC_ADDRESS</code>
+      <code id="btc">bc1qar7nrcjwyt3h0dtl7ny7c0zutal8rjn8nrptqe</code>
+      <div class="meta">Network: Bitcoin (BTC) mainnet only.</div>
     </div>
 
     <div class="card">
       <div class="row">
         <div>
-          <div class="title">LTC — Litecoin network</div>
+          <div class="title">LTC — Litecoin</div>
           <div class="meta">Often convenient for small transfers.</div>
         </div>
-        <button class="btn" onclick="copyText('ltc')">Copy</button>
+        <button class="btn" aria-label="Copy LTC address" onclick="copyText('ltc')">Copy</button>
       </div>
-      <code id="ltc">YOUR_LTC_ADDRESS</code>
-    </div>
-
-    <!-- Optional -->
-    <div class="card">
-      <div class="row">
-        <div>
-          <div class="title">ETH — Ethereum network (ERC20)</div>
-          <div class="meta">May have higher network fees.</div>
-        </div>
-        <button class="btn" onclick="copyText('eth')">Copy</button>
-      </div>
-      <code id="eth">YOUR_ETH_ADDRESS</code>
+      <code id="ltc">ltc1qar7nrcjwyt3h0dtl7ny7c0zutal8rjn8hlm0cf</code>
+      <div class="meta">Network: Litecoin (LTC) mainnet only.</div>
     </div>
 
     <div class="footer">
       Prefer card/PayPal? You can also leave a tip on Ko-fi:
-      <a href="YOUR_KOFI_LINK" target="_blank" rel="noopener">Ko-fi</a>
+      <a href="ko-fi.com/nosubsapps" target="_blank" rel="noopener noreferrer">Ko-fi</a>
     </div>
   </div>
 
+  <div id="toast" class="toast">Copied</div>
+
   <script>
+    function showToast(text) {
+      const t = document.getElementById('toast');
+      t.textContent = text || 'Copied';
+      t.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => t.classList.remove('show'), 900);
+    }
+
     async function copyText(id) {
       const el = document.getElementById(id);
-      const text = el.textContent.trim();
-      await navigator.clipboard.writeText(text);
+      const text = (el.textContent || '').trim();
+
+      // Primary: Clipboard API (works on HTTPS like GitHub Pages)
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast('Copied');
+          return;
+        } catch (e) { /* fallback below */ }
+      }
+
+      // Fallback: temporary textarea (better compatibility in iOS webviews)
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Copied');
+      } catch (e) {
+        showToast('Copy failed');
+      }
     }
   </script>
 </body>
